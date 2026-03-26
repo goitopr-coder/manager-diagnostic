@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マネジメント支援行動 成熟度診断</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-text: #0F6E56;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --red-text: #A32D2D;
+    --gray-light: #F1EFE8;
+    --gray-text: #5F5E5A;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --border: #e2e2e2;
+    --bg: #f7f8f6;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --text-sub: #666;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    height: 56px;
+  }
+  .site-header .logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .site-header .logo span { color: var(--text-sub); font-weight: 400; margin-left: 8px; font-size: 12px; text-transform: none; }
+
+  /* ── Main ── */
+  .main { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+  /* ── Intro card ── */
+  .intro-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .intro-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .intro-card .subtitle { font-size: 13px; color: var(--text-sub); margin-bottom: 1.25rem; }
+  .intro-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+  .meta-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-sub);
+    background: var(--bg); border-radius: 20px; padding: 4px 12px;
+  }
+  .meta-pill .icon { width: 14px; height: 14px; fill: var(--green); }
+
+  /* ── Progress ── */
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: var(--text-sub); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* ── Category badge ── */
+  .cat-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500;
+    color: var(--green-text); background: var(--green-light);
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;
+  }
+
+  /* ── Question card ── */
+  .q-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    transition: box-shadow 0.2s;
+  }
+  .q-meta { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .lv-dot { display: inline-flex; gap: 3px; }
+  .lv-dot span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .lv-dot span.active { background: var(--green); }
+  .q-text { font-size: 14px; line-height: 1.75; margin-bottom: 1.25rem; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn {
+    padding: 14px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover { border-color: #aaa; background: var(--bg); }
+  .choice-btn.yes.selected { background: var(--green); color: #fff; border-color: var(--green); }
+  .choice-btn.no.selected { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* ── Nav ── */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+  .btn {
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: #aaa; }
+  .btn-primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-info { font-size: 12px; color: var(--text-sub); }
+
+  /* ── Result ── */
+  #resultSection { display: none; }
+
+  .result-heading { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .result-sub { font-size: 13px; color: var(--text-sub); margin-bottom: 1.5rem; }
+
+  .chart-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .chart-wrap { position: relative; width: 100%; height: 260px; }
+
+  /* Total score */
+  .total-score-card {
+    background: var(--green); color: #fff;
+    border-radius: var(--radius); padding: 1.5rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;
+  }
+  .total-score-card .ts-left .ts-label { font-size: 12px; opacity: 0.85; margin-bottom: 4px; }
+  .total-score-card .ts-left .ts-val { font-size: 42px; font-weight: 700; line-height: 1; }
+  .total-score-card .ts-left .ts-max { font-size: 16px; opacity: 0.75; margin-left: 4px; }
+  .total-score-card .ts-right { text-align: right; }
+  .total-score-card .ts-right .ts-pct { font-size: 32px; font-weight: 700; }
+  .total-score-card .ts-right .ts-pct-label { font-size: 12px; opacity: 0.8; }
+
+  /* Category score grid */
+  .cat-score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .cat-score-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 12px; text-align: center;
+  }
+  .cat-score-card .csc-label { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; line-height: 1.4; }
+  .cat-score-card .csc-lv { font-size: 24px; font-weight: 700; margin-bottom: 2px; }
+  .cat-score-card .csc-pts { font-size: 11px; }
+  .cat-score-card .csc-desc { font-size: 10px; color: var(--text-sub); margin-top: 4px; }
+  .lv0 .csc-lv, .lv0 .csc-pts { color: #aaa; }
+  .lv1 .csc-lv, .lv1 .csc-pts { color: var(--amber); }
+  .lv2 .csc-lv, .lv2 .csc-pts { color: var(--green); }
+  .lv3 .csc-lv, .lv3 .csc-pts { color: var(--blue); }
+
+  /* Section title */
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    margin: 1.75rem 0 12px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--green-light);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--green); border-radius: 2px; }
+
+  /* Stack note */
+  .stack-note {
+    font-size: 12px; color: var(--text-sub);
+    background: var(--green-light); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin-bottom: 1.25rem; line-height: 1.6;
+    border-left: 3px solid var(--green);
+  }
+
+  /* Advice */
+  .advice-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 12px;
+  }
+  .advice-cat {
+    font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  }
+  .advice-score-pill {
+    font-size: 11px; font-weight: 500;
+    background: var(--green-light); color: var(--green-text);
+    padding: 2px 10px; border-radius: 20px;
+  }
+  .advice-block { margin-bottom: 10px; }
+  .advice-block:last-child { margin-bottom: 0; }
+  .advice-lv-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .lv-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .badge-done { background: var(--green-light); color: var(--green-text); }
+  .badge-todo { background: var(--red-light); color: var(--red-text); }
+  .badge-blocked { background: var(--gray-light); color: var(--gray-text); }
+
+  .detail-box {
+    border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 4px;
+    font-size: 12px; line-height: 1.6;
+  }
+  .detail-box ul { padding-left: 16px; }
+  .detail-box li { margin-bottom: 2px; }
+  .detail-box .box-head { font-weight: 500; margin-bottom: 4px; font-size: 11px; }
+  .box-done { background: var(--green-light); color: #0a5540; }
+  .box-todo { background: var(--red-light); color: #7a2020; }
+  .box-next { background: var(--amber-light); color: #6b3d00; }
+  .box-blocked { background: var(--gray-light); color: var(--gray-text); }
+
+  /* Overall */
+  .overall-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .overall-card .ov-score { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; }
+  .overall-card .ov-text { font-size: 13px; line-height: 1.8; }
+
+  .restart-wrap { text-align: center; margin-top: 2rem; }
+  .btn-restart {
+    padding: 12px 32px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); background: var(--white);
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--text); transition: all 0.15s;
+  }
+  .btn-restart:hover { border-color: #aaa; }
+
+  @media (max-width: 480px) {
+    .cat-score-grid { grid-template-columns: 1fr 1fr; }
+    .total-score-card { flex-direction: column; text-align: center; }
+    .total-score-card .ts-right { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">Manager Diagnostic <span>マネジメント支援行動 成熟度診断</span></div>
+</header>
+
+<main class="main">
+
+  <!-- Quiz -->
+  <div id="quizSection">
+    <div class="intro-card">
+      <h1>マネジメント支援行動 成熟度診断</h1>
+      <p class="subtitle">メンバーへの働きかけに関する3カテゴリ・9設問の自己診断ツールです</p>
+      <div class="intro-meta">
+        <span class="meta-pill">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 1 1-2 0v-.07A8.001 8.001 0 0 1 4.07 9H5a1 1 0 0 1 0 2 6 6 0 0 0 6 6zm-1-5a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1z"/></svg>
+          所要時間：約3〜5分
+        </span>
+        <span class="meta-pill">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          9設問・2択回答
+        </span>
+        <span class="meta-pill">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 3h18v4H3zM3 10h18v4H3zM3 17h18v4H3z"/></svg>
+          積み上がり方式スコアリング（最大18点）
+        </span>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span id="progressLabel">0 / 9 回答済み</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <div id="qArea"></div>
+
+    <div class="nav">
+      <button class="btn" id="prevBtn" onclick="go(-1)" disabled>← 前へ</button>
+      <span class="nav-info" id="navInfo">1 / 9</span>
+      <button class="btn btn-primary" id="nextBtn" onclick="go(1)" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="resultSection">
+    <div class="result-heading">成熟度診断 結果</div>
+    <div class="result-sub">積み上がり判定：Lv1が未達成の場合、Lv2・3は加点されません</div>
+
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+
+    <div class="total-score-card">
+      <div class="ts-left">
+        <div class="ts-label">総合成熟度スコア</div>
+        <div>
+          <span class="ts-val" id="totalScoreVal">0</span>
+          <span class="ts-max">/ 18点</span>
+        </div>
+      </div>
+      <div class="ts-right">
+        <div class="ts-pct" id="totalPct">0%</div>
+        <div class="ts-pct-label">達成率</div>
+      </div>
+    </div>
+
+    <div class="cat-score-grid" id="catScoreGrid"></div>
+
+    <div class="section-title">カテゴリ別アドバイス</div>
+    <div class="stack-note">積み上がり判定：前のレベルが未達成の場合、それ以降のレベルは「保留」として表示されます。まず最初の未達レベルから取り組みましょう。</div>
+    <div id="adviceArea"></div>
+
+    <div class="section-title">総合コメント</div>
+    <div class="overall-card" id="overallCard"></div>
+
+    <div class="restart-wrap">
+      <button class="btn-restart" onclick="restart()">もう一度診断する</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const Qs = [
+  { no:1, cat:0, lv:1, text:"チーム・組織としても挑戦を繰り返しつつ、メンバーの能力に応じた課題や業務を設定し、達成感を得るまたは成長できる機会を与えている" },
+  { no:2, cat:0, lv:2, text:"メンバーの考え・価値観を知り、メンバーの成長や機会の拡大に向けた働きかけをしている" },
+  { no:3, cat:0, lv:3, text:"メンバーに目標を明示し、達成に必要な権限や意思決定を委譲し、主体的に行動・挑戦できる支援をしている" },
+  { no:4, cat:1, lv:1, text:"1on1などを活用して適時にメンバーとコミュニケーションを取り、またその際は必要に応じてプライベートや体調についての話を織り交ぜるなどしてアイスブレイクを実施している" },
+  { no:5, cat:1, lv:2, text:"メンバーの特性（年齢、性格、キャリアビジョンなど）や役職に応じて、指導やコミュニケーションの方法を柔軟に変えている" },
+  { no:6, cat:1, lv:3, text:"相反する意見でも相手を尊重し、納得感のある対話を意識できている" },
+  { no:7, cat:2, lv:1, text:"普段からメンバーの意見や考えを傾聴し、業務のフィードバックを行う際は、課題や改善点だけではなく気づきや成長に繋がる具体的なフィードバックができている" },
+  { no:8, cat:2, lv:2, text:"メンバーの失敗や課題を成長機会と捉え、具体的なフィードバックを行い、要因分析を促しながら伴走している" },
+  { no:9, cat:2, lv:3, text:"各メンバーがWill（ありたい姿）とMust（求められること）の重なりを理解し、納得感をもって主体的に行動を起こせるよう、個々の特性を見ながら根拠や実現方法を多角的に問いかけ共に考えることで、メンバーの自律的なキャリア形成を促進している" },
+];
+
+const BEHAVIORS = {
+  0: {
+    1: { done: ["メンバーの能力に応じた課題設定を行い、達成感を得る機会を提供している", "チーム・組織としても挑戦を繰り返し、成長を促している"], next: ["外部セミナーや研修への参加を推奨する", "自組織を超えた新しい経験を提供する機会を検討する", "興味を示さない仕事でも本人の価値観と結び付けて意義を見出す働きかけをする"] },
+    2: { done: ["自組織を超えた新しい経験を提供している", "外部セミナーや研修への参加を推奨している", "興味を示さない仕事に対しても本人の価値観と結び付けて意義を見出すよう働きかけている"], next: ["社外への挑戦を応援し、自身で決断・行動することをサポートする", "必要な権限移譲を行い、意思決定をメンバーに経験させる", "進捗確認とフィードバックに留め、細部の管理はせず主体性を尊重する"] },
+    3: { done: ["社外への挑戦を応援し、自身で決断・行動することをサポートしている", "必要な権限移譲を行い、意思決定をメンバーに経験させている", "進捗の確認とフィードバックに留め、細部の管理はせず主体性を尊重している"], next: [] }
+  },
+  1: {
+    1: { done: ["1on1を業務以外の話にも積極活用している", "プライベートや体調などもテーマ化し、アイスブレイクを実施している"], next: ["細かいフィードバックを好むメンバーには丁寧に、構われたくないタイプには短く端的に対応する", "年齢や役職に応じて指導方法を調整し、若手には基礎の徹底、課長級には自立を促す"] },
+    2: { done: ["細かいフィードバックを好むメンバーには丁寧に、構われたくないタイプには短く端的に対応している", "年齢や役職に応じて指導方法を調整し、若手には基礎の徹底、課長級には自立を促している"], next: ["意見が相反する際も相手の意見を確認し、納得感を醸成することを意識する"] },
+    3: { done: ["意見が相反する際も相手の意見を確認し、納得感を醸成している"], next: [] }
+  },
+  2: {
+    1: { done: ["メンバーの考えを傾聴している", "課題や改善点を伝えるだけでなく、良い点・できた点についてもしっかりフィードバックを実施している"], next: ["「失敗から学ぶ機会」として、メンバーの挑戦に対する具体的なフィードバックを実施する", "伸び悩んでいるメンバーに対して、要因を考えてもらうための投げかけを行い、伴走する"] },
+    2: { done: ["「失敗から学ぶ機会」として、メンバーの挑戦に対する具体的なフィードバックを実施している", "伸び悩んでいるメンバーに対して、要因を考えてもらうための投げかけを行い、伴走している"], next: ["内発的動機を引き出す個別対応のコーチングを実施する", "「なぜ」を問い続け、根拠や実現方法を深掘りし、視座を高め、メンバーの自律性を醸成する"] },
+    3: { done: ["内発的動機を引き出す個別対応のコーチングを実施している", "「なぜ」を問い続け、根拠や実現方法を深掘りし、視座を高め、メンバーの自律性を醸成している"], next: [] }
+  }
+};
+
+const CAT_NAMES = ["自律を促す成長機会の提供", "効果的なコミュニケーションと信頼関係構築", "コーチングとフィードバック"];
+const CAT_SHORT = ["自律・成長機会", "コミュニケーション", "コーチング"];
+const LV_DESC = ["未到達", "基本レベル達成", "応用レベル達成", "高度レベル達成"];
+const LV_CLASS = ["lv0", "lv1", "lv2", "lv3"];
+
+let answers = Array(9).fill(null);
+let cur = 0;
+let chartInst = null;
+
+function calcCatScore(c) {
+  const qs = Qs.filter(q => q.cat === c).sort((a,b) => a.lv - b.lv);
+  let score = 0;
+  for (const q of qs) {
+    if (answers[q.no - 1] === 1) score += q.lv;
+    else break;
+  }
+  return score;
+}
+
+function getReachedLevel(c) {
+  const qs = Qs.filter(q => q.cat === c).sort((a,b) => a.lv - b.lv);
+  let reached = 0;
+  for (const q of qs) {
+    if (answers[q.no - 1] === 1) reached = q.lv;
+    else break;
+  }
+  return reached;
+}
+
+function lvDots(lv) {
+  return [1,2,3].map(i => `<span${i <= lv ? ' class="active"' : ''}></span>`).join('');
+}
+
+function renderQ() {
+  const q = Qs[cur];
+  const ans = answers[cur];
+  document.getElementById('qArea').innerHTML = `
+    <span class="cat-badge">${CAT_NAMES[q.cat]}</span>
+    <div class="q-card">
+      <div class="q-meta">
+        Q${q.no}　支援行動レベル ${q.lv}
+        <span class="lv-dot">${lvDots(q.lv)}</span>
+      </div>
+      <div class="q-text">${q.text}</div>
+      <div class="choices">
+        <button class="choice-btn yes ${ans === 1 ? 'selected' : ''}" onclick="pick(1)">✓ できている</button>
+        <button class="choice-btn no ${ans === 0 ? 'selected' : ''}" onclick="pick(0)">✗ できていない</button>
+      </div>
+    </div>`;
+  const answered = answers.filter(a => a !== null).length;
+  const pct = Math.round(answered / 9 * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = answered + ' / 9 回答済み';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('navInfo').textContent = (cur + 1) + ' / 9';
+  document.getElementById('prevBtn').disabled = cur === 0;
+  document.getElementById('nextBtn').disabled = answers[cur] === null;
+  document.getElementById('nextBtn').textContent = cur === 8 ? '結果を見る →' : '次へ →';
+}
+
+function pick(v) { answers[cur] = v; renderQ(); }
+
+function go(dir) {
+  if (dir === 1 && cur === 8) { showResult(); return; }
+  cur = Math.max(0, Math.min(8, cur + dir));
+  renderQ();
+}
+
+function showResult() {
+  document.getElementById('quizSection').style.display = 'none';
+  document.getElementById('resultSection').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  const catScores = [0,1,2].map(c => calcCatScore(c));
+  const catLevels = [0,1,2].map(c => getReachedLevel(c));
+  const total = catScores.reduce((a,b) => a+b, 0);
+  const pct = Math.round(total / 18 * 100);
+
+  document.getElementById('totalScoreVal').textContent = total;
+  document.getElementById('totalPct').textContent = pct + '%';
+
+  document.getElementById('catScoreGrid').innerHTML = [0,1,2].map(c => `
+    <div class="cat-score-card ${LV_CLASS[catLevels[c]]}">
+      <div class="csc-label">${CAT_SHORT[c]}</div>
+      <div class="csc-lv">${catLevels[c] === 0 ? '–' : 'Lv' + catLevels[c]}</div>
+      <div class="csc-pts">${catScores[c]}点 / 6点</div>
+      <div class="csc-desc">${LV_DESC[catLevels[c]]}</div>
+    </div>`).join('');
+
+  // Advice
+  const adviceHtml = [0,1,2].map(c => {
+    let blocks = '';
+    [1,2,3].forEach(lv => {
+      const q = Qs.find(q => q.cat === c && q.lv === lv);
+      const isDone = answers[q.no - 1] === 1;
+      const prevQ = lv > 1 ? Qs.find(q2 => q2.cat === c && q2.lv === lv - 1) : null;
+      const isBlocked = !isDone && prevQ && answers[prevQ.no - 1] === 0;
+      const beh = BEHAVIORS[c][lv];
+
+      if (isDone) {
+        blocks += `<div class="advice-block">
+          <div class="advice-lv-row"><span class="lv-badge badge-done">✓ レベル${lv} 達成</span></div>
+          <div class="detail-box box-done"><div class="box-head">できていること</div><ul>${beh.done.map(d=>`<li>${d}</li>`).join('')}</ul></div>
+          ${beh.next.length ? `<div class="detail-box box-next"><div class="box-head">次のレベルへ向けて</div><ul>${beh.next.map(n=>`<li>${n}</li>`).join('')}</ul></div>` : ''}
+        </div>`;
+      } else if (isBlocked) {
+        blocks += `<div class="advice-block">
+          <div class="advice-lv-row"><span class="lv-badge badge-blocked">○ レベル${lv}（レベル${lv-1}達成後に取り組む）</span></div>
+          <div class="detail-box box-blocked"><div class="box-head">レベル${lv-1}を達成してから着手しましょう</div><ul>${beh.done.map(n=>`<li>${n}</li>`).join('')}</ul></div>
+        </div>`;
+      } else {
+        blocks += `<div class="advice-block">
+          <div class="advice-lv-row"><span class="lv-badge badge-todo">△ レベル${lv} 改善ポイント</span></div>
+          <div class="detail-box box-todo"><div class="box-head">今すぐ取り組める行動</div><ul>${beh.done.map(n=>`<li>${n}</li>`).join('')}</ul></div>
+        </div>`;
+      }
+    });
+    return `<div class="advice-card">
+      <div class="advice-cat">${CAT_NAMES[c]}<span class="advice-score-pill">${catScores[c]}点 / 6点</span></div>
+      ${blocks}
+    </div>`;
+  }).join('');
+  document.getElementById('adviceArea').innerHTML = adviceHtml;
+
+  // Overall comment
+  const allLv3 = catLevels.every(l => l === 3);
+  const allLv2 = catLevels.every(l => l >= 2);
+  const allLv1 = catLevels.every(l => l >= 1);
+  const zeroNames = [0,1,2].filter(c => catLevels[c] === 0).map(c => CAT_SHORT[c]).join('・');
+  let ov = '';
+  if (allLv3) ov = `全カテゴリでレベル3を達成しています（${total}/18点）。高度なマネジメント支援行動が実践できており、メンバーの自律的成長を力強く支援できています。今後は後進マネージャーへのナレッジ共有や組織全体の底上げへの貢献を意識しましょう。`;
+  else if (allLv2) ov = `全カテゴリでレベル2以上を達成しています（${total}/18点）。応用レベルの行動が定着しており、非常に良好な状態です。各カテゴリの「次のレベルへ向けて」を参考に、レベル3の行動を意識的に取り入れていきましょう。`;
+  else if (allLv1) ov = `全カテゴリでレベル1を達成しています（${total}/18点）。基本的な支援行動が定着しています。次のステップとして、各カテゴリの「次のレベルへ向けて」にある行動を1つ選び、30日間意識的に実践してみましょう。`;
+  else ov = `「${zeroNames}」でレベル1が未達成です（${total}/18点）。まずこのカテゴリの「今すぐ取り組める行動」から着手することが最優先です。小さな習慣から始めることで、メンバーとの信頼関係と成長支援の基盤が築かれます。`;
+  document.getElementById('overallCard').innerHTML = `
+    <div class="ov-score">総合成熟度スコア：${total} / 18点（${pct}%）</div>
+    <div class="ov-text">${ov}</div>`;
+
+  // Radar
+  if (chartInst) chartInst.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  chartInst = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: CAT_SHORT,
+      datasets: [{
+        data: catScores,
+        backgroundColor: 'rgba(29,158,117,0.15)',
+        borderColor: '#1D9E75',
+        borderWidth: 2,
+        pointBackgroundColor: '#1D9E75',
+        pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: {
+        min: 0, max: 6,
+        ticks: { stepSize: 1, font: { size: 11 }, color: '#999',
+          callback: v => ({0:'0',1:'Lv1',2:'Lv2',3:'Lv3',4:'',5:'',6:''}[v] ?? '') },
+        grid: { color: 'rgba(0,0,0,0.07)' },
+        pointLabels: { font: { size: 12, weight: '500' }, color: '#444' },
+      }}
+    }
+  });
+}
+
+function restart() {
+  answers = Array(9).fill(null);
+  cur = 0;
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('quizSection').style.display = 'block';
+  window.scrollTo(0, 0);
+  renderQ();
+}
+
+renderQ();
+</script>
+</body>
+</html>
